@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot AI Audit Suite</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- SheetJS (XLSX) for Excel Import & Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Chart.js for Executive Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-800 antialiased selection:bg-blue-500 selection:text-white">
+
+    <header class="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-500/30">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight flex items-center gap-2">
+                        Chatbot AI Audit Workbench
+                        <span class="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider">Knowledge Specialist</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">AI Chatbot Quality Assurance & Knowledge Base Coverage Auditor</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <button onclick="app.openModal('modal-api-key')" class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                    <i data-lucide="key" class="w-3.5 h-3.5 text-amber-400"></i>
+                    <span id="api-key-status">Gemini API Key</span>
+                </button>
+                <button onclick="app.runAudit()" id="btn-run-audit-header" class="flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition active:scale-95">
+                    <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                    <span>Run Full Audit</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
+        
+        <!-- Tab Navigation Bar -->
+        <div class="flex items-center justify-between border-b border-slate-200 mb-6 bg-white p-1.5 rounded-2xl shadow-sm">
+            <nav class="flex space-x-1" aria-label="Tabs">
+                <button onclick="app.switchTab('audit')" id="tab-btn-audit" class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-xs transition bg-blue-50 text-blue-700 font-semibold shadow-sm">
+                    <i data-lucide="play-circle" class="w-4 h-4"></i>
+                    <span>1. Upload & Run Audit</span>
+                    <span id="badge-convo-count" class="ml-1 bg-blue-200 text-blue-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold">5</span>
+                </button>
+
+                <button onclick="app.switchTab('results')" id="tab-btn-results" class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-xs transition text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                    <span>2. Audit Results & Overrides</span>
+                    <span id="badge-results-count" class="ml-1 bg-slate-200 text-slate-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+                </button>
+
+                <button onclick="app.switchTab('kb')" id="tab-btn-kb" class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-xs transition text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                    <i data-lucide="book-open" class="w-4 h-4"></i>
+                    <span>Knowledge Base Repository</span>
+                    <span id="badge-kb-count" class="ml-1 bg-slate-200 text-slate-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">5</span>
+                </button>
+
+                <button onclick="app.switchTab('analytics')" id="tab-btn-analytics" class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-xs transition text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                    <span>Audit Analytics</span>
+                </button>
+            </nav>
+
+            <div class="flex items-center space-x-2 px-2">
+                <button onclick="app.downloadKBTemplate()" class="flex items-center gap-1.5 text-[11px] font-medium text-slate-600 hover:text-blue-600 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition" title="Download Excel template for KB creation">
+                    <i data-lucide="download" class="w-3.5 h-3.5 text-blue-500"></i>
+                    <span>KB Template</span>
+                </button>
+                <button onclick="app.downloadConvoTemplate()" class="flex items-center gap-1.5 text-[11px] font-medium text-slate-600 hover:text-blue-600 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition" title="Download Excel template for Chat log uploads">
+                    <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-500"></i>
+                    <span>Chat Log Template</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="tab-content-audit" class="tab-panel flex-1 space-y-6">
+            <!-- Rules Overview Card -->
+            <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+                <div class="absolute right-0 top-0 bottom-0 w-1/3 bg-blue-500/10 backdrop-blur-3xl transform skew-x-12 pointer-events-none"></div>
+                <div class="relative z-10 max-w-3xl space-y-3">
+                    <div class="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-400/30 text-blue-300 px-2.5 py-1 rounded-full text-xs font-semibold">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Knowledge Specialist Audit Logic Rules
+                    </div>
+                    <h2 class="text-xl font-bold tracking-tight">Automated Conversation Quality & Resolution Feasibility Audit</h2>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Upload your partial or completed user-AI chatbot conversation Excel file. The auditor engine identifies the user's core issue, checks availability against your Knowledge Base (KB), evaluates if the resolution requires Service Desk intervention (`VRS IT Service Desk` vs `VRS Self Service`), and detects if the user bypassed AI by explicitly requesting a "Live Agent".
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+                        <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl backdrop-blur-sm">
+                            <span class="font-bold text-emerald-400 block mb-0.5">VRS Self Service KB</span>
+                            <span class="text-slate-300 text-[11px]">User can self-solve &rarr; <code class="bg-black/30 px-1 py-0.5 rounded font-mono text-emerald-300">SD Intervention: N</code></span>
+                        </div>
+                        <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl backdrop-blur-sm">
+                            <span class="font-bold text-amber-400 block mb-0.5">VRS IT Service Desk KB</span>
+                            <span class="text-slate-300 text-[11px]">Requires agent action &rarr; <code class="bg-black/30 px-1 py-0.5 rounded font-mono text-amber-300">SD Intervention: Y</code></span>
+                        </div>
+                        <div class="bg-white/5 border border-white/10 p-2.5 rounded-xl backdrop-blur-sm">
+                            <span class="font-bold text-rose-400 block mb-0.5">Proactive Escape</span>
+                            <span class="text-slate-300 text-[11px]">User stated "Live Agent" &rarr; <code class="bg-black/30 px-1 py-0.5 rounded font-mono text-rose-300">Escape Workflow: Y</code></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Upload & Queue Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Drop Zone -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+                            <i data-lucide="file-up" class="w-4 h-4 text-blue-600"></i>
+                            Upload Conversation Excel File
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-1">Accepts `.xlsx`, `.xls`, or `.csv` files with Chat transcripts.</p>
+                    </div>
+
+                    <label class="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/50 rounded-2xl p-6 transition flex flex-col items-center justify-center text-center cursor-pointer group">
+                        <div class="p-3 bg-white rounded-full shadow-sm text-blue-600 group-hover:scale-110 transition">
+                            <i data-lucide="upload-cloud" class="w-8 h-8"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-700 mt-3">Click to browse or drop file here</p>
+                        <p class="text-[10px] text-slate-400 mt-1">Excel file containing Chat ID and Conversation Log</p>
+                        <input type="file" id="convo-file-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="app.handleConvoFileUpload(event)">
+                    </label>
+
+                    <div id="convo-file-status" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center justify-between">
+                        <div class="flex items-center gap-2 truncate">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
+                            <span id="convo-file-name" class="font-semibold truncate">chats.xlsx</span>
+                        </div>
+                        <span id="convo-file-rows" class="text-[10px] bg-emerald-200 text-emerald-900 font-bold px-2 py-0.5 rounded-full">0 chats</span>
+                    </div>
+
+                    <div class="pt-2 flex items-center justify-between border-t border-slate-100">
+                        <button onclick="app.loadDemoConvos()" class="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline flex items-center gap-1">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Demo Chats
+                        </button>
+                        <button onclick="app.clearStagedConvos()" class="text-xs text-slate-400 hover:text-rose-600 transition">
+                            Clear Queue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Staged Conversation Queue -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+                                <i data-lucide="list-todo" class="w-4 h-4 text-blue-600"></i>
+                                Conversation Audit Queue
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Conversations currently loaded and ready for audit processing</p>
+                        </div>
+                        <button onclick="app.addSingleConversationPrompt()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Manual Chat
+                        </button>
+                    </div>
+
+                    <div id="staged-convo-list" class="flex-1 max-h-[340px] overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                        <!-- Dynamic Conversation Cards -->
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 mt-4 flex items-center justify-between">
+                        <span class="text-xs text-slate-500">Ready to audit <strong id="queue-count-text" class="text-slate-800">5</strong> conversation logs</span>
+                        <button onclick="app.runAudit()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-blue-600/20 transition flex items-center gap-2 active:scale-95">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i> Run Audit Engine Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-content-results" class="tab-panel flex-1 hidden space-y-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-3 w-full md:w-auto">
+                    <div class="relative flex-1 md:w-72">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+                        <input type="text" id="audit-search" oninput="app.filterAuditResults()" placeholder="Search chat ID, issue or KB..." class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <select id="audit-filter-sd" onchange="app.filterAuditResults()" class="text-xs rounded-xl border border-slate-200 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="ALL">All SD Interventions</option>
+                        <option value="Y">SD Needed (Y)</option>
+                        <option value="N">Self-Solvable (N)</option>
+                        <option value="N/A">Not Applicable (N/A)</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+                    <button onclick="app.exportAuditExcel()" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-md shadow-emerald-600/20 transition active:scale-95">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Export Consolidated Report (.xlsx)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Audit Results Table -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900 text-white text-[11px] font-bold uppercase tracking-wider">
+                                <th class="py-3 px-4">Chat ID</th>
+                                <th class="py-3 px-4 min-w-[280px]">Consolidated Messages / Identified Issue</th>
+                                <th class="py-3 px-4 text-center">KB Available?</th>
+                                <th class="py-3 px-4 text-center">Escape Workflow?</th>
+                                <th class="py-3 px-4 text-center">SD Intervention Needed?</th>
+                                <th class="py-3 px-4">Matched KB Article</th>
+                                <th class="py-3 px-4 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-table-body" class="divide-y divide-slate-100 text-xs">
+                            <!-- Dynamic Audit Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-content-kb" class="tab-panel flex-1 hidden space-y-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-3 w-full md:w-auto">
+                    <div class="relative flex-1 md:w-80">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+                        <input type="text" id="kb-search" oninput="app.renderKBTable()" placeholder="Search KB number, title, body..." class="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <select id="kb-filter-repo" onchange="app.renderKBTable()" class="text-xs rounded-xl border border-slate-200 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="ALL">All Knowledge Bases</option>
+                        <option value="VRS Self Service">VRS Self Service (User Solvable)</option>
+                        <option value="VRS IT Service Desk">VRS IT Service Desk (SD Agent Needed)</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <label class="cursor-pointer flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition">
+                        <i data-lucide="upload" class="w-3.5 h-3.5 text-slate-500"></i>
+                        <span>Import KB Excel</span>
+                        <input type="file" id="kb-file-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="app.handleKBFileUpload(event)">
+                    </label>
+                    <button onclick="app.openNewKBModal()" class="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl shadow-md shadow-blue-600/20 transition">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>New KB Article</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-800 text-white text-[11px] font-bold uppercase tracking-wider">
+                                <th class="py-3 px-4">KB Number</th>
+                                <th class="py-3 px-4">Article Title</th>
+                                <th class="py-3 px-4 min-w-[300px]">Article Body (HTML Format)</th>
+                                <th class="py-3 px-4">Knowledge Base / Repository</th>
+                                <th class="py-3 px-4 text-center">Intervention Flag</th>
+                                <th class="py-3 px-4 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kb-table-body" class="divide-y divide-slate-100 text-xs">
+                            <!-- Dynamic KB Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-content-analytics" class="tab-panel flex-1 hidden space-y-6">
+            <!-- Metrics Bar -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+                    <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Audited Chats</span>
+                    <p id="metric-total-audited" class="text-2xl font-bold text-slate-800">0</p>
+                    <span class="text-[11px] text-slate-400">Logs analyzed in current session</span>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+                    <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">KB Article Coverage</span>
+                    <p id="metric-kb-coverage" class="text-2xl font-bold text-emerald-600">0%</p>
+                    <span class="text-[11px] text-slate-400">Issues with matching KB articles</span>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+                    <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Proactive Escape Rate</span>
+                    <p id="metric-escape-rate" class="text-2xl font-bold text-rose-600">0%</p>
+                    <span class="text-[11px] text-slate-400">User bypassed AI for Live Agent</span>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+                    <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">SD Intervention Ratio</span>
+                    <p id="metric-sd-ratio" class="text-2xl font-bold text-amber-600">0%</p>
+                    <span class="text-[11px] text-slate-400">Requires Service Desk agent action</span>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="font-bold text-sm text-slate-800">Resolution Feasibility Breakdown</h3>
+                    <div class="h-64 relative flex items-center justify-center">
+                        <canvas id="chart-sd-breakdown"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 class="font-bold text-sm text-slate-800">KB Coverage vs Missing Knowledge</h3>
+                    <div class="h-64 relative flex items-center justify-center">
+                        <canvas id="chart-kb-coverage"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    
+    <!-- Modal 1: KB Form Modal -->
+    <div id="modal-kb-form" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden transform transition-all">
+            <div class="bg-slate-900 px-6 py-4 text-white flex items-center justify-between">
+                <h3 id="modal-kb-title" class="font-bold text-sm flex items-center gap-2">
+                    <i data-lucide="book-open" class="w-4 h-4 text-blue-400"></i> New Knowledge Base Article
+                </h3>
+                <button onclick="app.closeModal('modal-kb-form')" class="text-slate-400 hover:text-white transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form onsubmit="app.saveKBArticle(event)" class="p-6 space-y-4 text-xs">
+                <input type="hidden" id="kb-form-id">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-700">KB Number *</label>
+                        <input type="text" id="kb-form-num" required placeholder="e.g. KB00101" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-700">Knowledge Base Repository *</label>
+                        <select id="kb-form-repo" required class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium">
+                            <option value="VRS Self Service">VRS Self Service (User Solvable &rarr; SD: N)</option>
+                            <option value="VRS IT Service Desk">VRS IT Service Desk (SD Agent Needed &rarr; SD: Y)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-semibold text-slate-700">KB Article Title *</label>
+                    <input type="text" id="kb-form-title" required placeholder="e.g. Password Reset & Account Unlock Portal" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between">
+                        <label class="font-semibold text-slate-700">Article Body (Supports HTML Format) *</label>
+                        <div class="flex bg-slate-100 p-0.5 rounded-lg text-[10px]">
+                            <button type="button" onclick="app.switchKBBodyTab('code')" id="kb-tab-code" class="px-2 py-0.5 rounded-md font-semibold bg-white shadow-sm text-blue-600">HTML Code</button>
+                            <button type="button" onclick="app.switchKBBodyTab('preview')" id="kb-tab-preview" class="px-2 py-0.5 rounded-md font-semibold text-slate-600">Live HTML Preview</button>
+                        </div>
+                    </div>
+                    
+                    <div id="kb-body-code-container">
+                        <textarea id="kb-form-body" rows="6" required placeholder="Enter HTML content e.g. <p>Step 1: Go to portal...</p>" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-mono text-[11px]"></textarea>
+                    </div>
+
+                    <div id="kb-body-preview-container" class="hidden min-h-[140px] max-h-[200px] overflow-y-auto p-3 border border-slate-200 rounded-xl bg-slate-50 prose prose-xs max-w-none custom-scrollbar">
+                        <!-- Live Rendered HTML -->
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end space-x-2">
+                    <button type="button" onclick="app.closeModal('modal-kb-form')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl shadow-md transition">Save KB Article</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Audit Detail & Inspector Modal -->
+    <div id="modal-audit-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-slate-900 px-6 py-4 text-white flex items-center justify-between flex-shrink-0">
+                <h3 id="modal-audit-title" class="font-bold text-sm flex items-center gap-2">
+                    <i data-lucide="file-search" class="w-4 h-4 text-blue-400"></i> Audit Inspector & Manual Override
+                </h3>
+                <button onclick="app.closeModal('modal-audit-detail')" class="text-slate-400 hover:text-white transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6 flex-1 text-xs custom-scrollbar">
+                <!-- Transcript vs Audit Comparison -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                            <i data-lucide="message-square" class="w-3.5 h-3.5 text-blue-500"></i> Raw Conversation Transcript
+                        </span>
+                        <div id="modal-convo-transcript" class="p-3 bg-slate-900 text-slate-100 rounded-xl font-mono text-[11px] whitespace-pre-wrap max-h-52 overflow-y-auto custom-scrollbar border border-slate-800"></div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                            <i data-lucide="cpu" class="w-3.5 h-3.5 text-purple-500"></i> Auditor Analysis & Consolidated Summary
+                        </span>
+                        <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl space-y-2 text-blue-900">
+                            <div>
+                                <strong class="text-[10px] text-blue-600 uppercase block">Consolidated Messages:</strong>
+                                <p id="modal-consolidated-msg" class="font-mono text-[11px] mt-0.5"></p>
+                            </div>
+                            <div>
+                                <strong class="text-[10px] text-blue-600 uppercase block">Identified Core Issue:</strong>
+                                <p id="modal-identified-issue" class="font-semibold text-[11px] mt-0.5 text-slate-800"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overrides Section -->
+                <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+                    <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                        <i data-lucide="sliders" class="w-4 h-4 text-blue-600"></i> Knowledge Specialist Manual Override Flags
+                    </h4>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="space-y-1">
+                            <label class="font-semibold text-slate-700">KB Available? (Y/N)</label>
+                            <select id="modal-override-kb" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white">
+                                <option value="Y">Y - Article Available</option>
+                                <option value="N">N - Missing Article</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="font-semibold text-slate-700">Escape Workflow? (Y/N)</label>
+                            <select id="modal-override-escape" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white">
+                                <option value="Y">Y - User Stated "Live Agent"</option>
+                                <option value="N">N - Gave AI a Chance</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="font-semibold text-slate-700">SD Intervention Needed?</label>
+                            <select id="modal-override-sd" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white">
+                                <option value="Y">Y - VRS IT Service Desk (Agent)</option>
+                                <option value="N">N - VRS Self Service (User)</option>
+                                <option value="N/A">N/A - No KB Article</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-700">Matched KB Article Reference</label>
+                        <select id="modal-override-kb-article" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white font-mono text-[11px]">
+                            <!-- Dynamic Options -->
+                        </select>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-700">Auditor Notes & Reasoning</label>
+                        <textarea id="modal-audit-reasoning" rows="2" placeholder="Explain override rationale if applicable..." class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-100 px-6 py-4 flex items-center justify-end space-x-2 flex-shrink-0">
+                <button onclick="app.closeModal('modal-audit-detail')" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition">Close</button>
+                <button onclick="app.saveAuditOverride()" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl shadow-md transition">Save Overrides</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Gemini API Key Modal -->
+    <div id="modal-api-key" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div class="bg-slate-900 px-6 py-4 text-white flex items-center justify-between">
+                <h3 class="font-bold text-sm flex items-center gap-2">
+                    <i data-lucide="key" class="w-4 h-4 text-amber-400"></i> Configure Gemini AI Engine
+                </h3>
+                <button onclick="app.closeModal('modal-api-key')" class="text-slate-400 hover:text-white transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4 text-xs">
+                <p class="text-slate-600 leading-relaxed">
+                    You can optionally connect the <strong>Gemini 3 Flash API</strong> for advanced natural language issue extraction. If left blank, the application will automatically fallback to the built-in local rule engine!
+                </p>
+
+                <div class="space-y-1">
+                    <label class="font-semibold text-slate-700">Gemini API Key (Optional)</label>
+                    <input type="password" id="input-gemini-key" placeholder="AIzaSy..." class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 font-mono">
+                </div>
+            </div>
+
+            <div class="bg-slate-50 px-6 py-4 flex items-center justify-end space-x-2">
+                <button onclick="app.closeModal('modal-api-key')" class="px-4 py-2 bg-slate-200 text-slate-700 font-semibold rounded-xl">Cancel</button>
+                <button onclick="app.saveApiKey()" class="px-5 py-2 bg-blue-600 text-white font-semibold rounded-xl shadow-md">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global Application Architecture & Controller
+        const app = {
+            activeTab: 'audit',
+            kbData: [],
+            stagedConvos: [],
+            auditResults: [],
+            selectedAuditId: null,
+            geminiApiKey: '',
+            charts: {},
+
+            // Lifecycle Initializer
+            init() {
+                this.kbData = [...this.defaultKB];
+                this.stagedConvos = [...this.defaultConvos];
+                this.updateCounts();
+                this.renderKBTable();
+                this.renderStagedConversations();
+                this.renderAuditTable();
+                this.updateSummaryMetrics();
+                lucide.createIcons();
+            },
+
+            // Default Knowledge Base Articles (HTML Formatted)
+            defaultKB: [
+                {
+                    id: 'kb-1',
+                    kbNumber: 'KB00101',
+                    kbTitle: 'Password Reset & Account Unlock via Self-Service Portal',
+                    kbBody: '<p>Users can reset forgotten domain passwords or unlock account through the <strong>VRS Self Service Identity Portal</strong>.</p><ul><li>Go to <a href="#" class="text-blue-600 underline">https://identity.vrs.internal</a></li><li>Complete 2FA MFA push verification on mobile device.</li><li>Set new password complying with corporate policy.</li></ul>',
+                    kbRepo: 'VRS Self Service'
+                },
+                {
+                    id: 'kb-2',
+                    kbNumber: 'KB00102',
+                    kbTitle: 'Cisco AnyConnect VPN Portal Connection & MFA Token Issues',
+                    kbBody: '<p>For VPN connection failures or invalid token errors:</p><ol><li>User must re-enroll soft token or request security group privilege elevation.</li><li><strong>Requires Service Desk administrator intervention</strong> to re-sync active directory token seeds.</li></ol>',
+                    kbRepo: 'VRS IT Service Desk'
+                },
+                {
+                    id: 'kb-3',
+                    kbNumber: 'KB00103',
+                    kbTitle: 'Standard Laptop Hardware Replacement & Peripheral Order',
+                    kbBody: '<p>Hardware failures, monitor display issues, or laptop battery replacement require:</p><ul><li>IT Service Desk ticket submission via asset manager.</li><li>Physical asset deployment by local site IT technicians.</li></ul>',
+                    kbRepo: 'VRS IT Service Desk'
+                },
+                {
+                    id: 'kb-4',
+                    kbNumber: 'KB00104',
+                    kbTitle: 'Microsoft Outlook & Email Signature Configuration',
+                    kbBody: '<p>Step-by-step guide for setting up corporate email signatures in Outlook:</p><p>Go to <code>File &gt; Options &gt; Mail &gt; Signatures</code> and paste company HTML signature standard.</p>',
+                    kbRepo: 'VRS Self Service'
+                },
+                {
+                    id: 'kb-5',
+                    kbNumber: 'KB00105',
+                    kbTitle: 'Software Request & SAP Authorization Approval',
+                    kbBody: '<p>SAP license provisioning requires manager approval and <strong>IT Security role assignment</strong> via Service Desk workflow ticket.</p>',
+                    kbRepo: 'VRS IT Service Desk'
+                }
+            ],
+
+            // Default Conversations Data Queue
+            defaultConvos: [
+                {
+                    id: 'CHAT-1001',
+                    transcript: 'User: Hello, I am having an issue connecting to the VPN today.\nAI: Have you checked your internet connection?\nUser: Yes internet is fine, but Cisco VPN gives error 800 token invalid.\nUser: Can you connect me to a live agent please?'
+                },
+                {
+                    id: 'CHAT-1002',
+                    transcript: 'User: Live agent please right away.\nAI: I can help you with many tasks. What is the issue?\nUser: Talk to representative now.'
+                },
+                {
+                    id: 'CHAT-1003',
+                    transcript: 'User: How do I reset my domain password?\nAI: You can reset it at https://identity.vrs.internal using 2FA.\nUser: Thanks, that worked!'
+                },
+                {
+                    id: 'CHAT-1004',
+                    transcript: 'User: I need to order catering for our team event next week.\nAI: I can help with IT related inquiries. For catering please contact facilities.'
+                },
+                {
+                    id: 'CHAT-1005',
+                    transcript: 'User: My laptop screen keeps flickering when unplugged.\nAI: Please submit an IT hardware replacement ticket.\nUser: Okay thank you.'
+                }
+            ],
+
+            // Helper: Strip HTML tags for NLP searching
+            stripHtml(html) {
+                if (!html) return '';
+                const tmp = document.createElement("DIV");
+                tmp.innerHTML = html;
+                return tmp.textContent || tmp.innerText || "";
+            },
+
+            // Escape HTML string for safe display
+            escapeHtml(str) {
+                if (!str) return '';
+                return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            },
+
+            // Tab Switcher
+            switchTab(tabName) {
+                this.activeTab = tabName;
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('bg-blue-50', 'text-blue-700', 'font-semibold', 'shadow-sm');
+                    b.classList.add('text-slate-600');
+                });
+
+                document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+                const btn = document.getElementById(`tab-btn-${tabName}`);
+                if (btn) {
+                    btn.classList.add('bg-blue-50', 'text-blue-700', 'font-semibold', 'shadow-sm');
+                    btn.classList.remove('text-slate-600');
+                }
+
+                if (tabName === 'analytics') {
+                    this.renderCharts();
+                }
+                lucide.createIcons();
+            },
+
+            // Modal Handlers
+            openModal(id) {
+                document.getElementById(id).classList.remove('hidden');
+            },
+            closeModal(id) {
+                document.getElementById(id).classList.add('hidden');
+            },
+
+            // Count Badge Updater
+            updateCounts() {
+                document.getElementById('badge-convo-count').innerText = this.stagedConvos.length;
+                document.getElementById('badge-results-count').innerText = this.auditResults.length;
+                document.getElementById('badge-kb-count').innerText = this.kbData.length;
+                document.getElementById('queue-count-text').innerText = this.stagedConvos.length;
+            },
+
+            handleConvoFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+
+                        if (!jsonData || jsonData.length === 0) {
+                            alert("Uploaded conversation file is empty!");
+                            return;
+                        }
+
+                        // Parse conversations with flexible header matching
+                        const importedConvos = jsonData.map((row, index) => {
+                            let id = '';
+                            let transcript = '';
+
+                            for (const key of Object.keys(row)) {
+                                const normKey = key.trim().toLowerCase();
+                                if (!id && (normKey.includes('chat') || normKey.includes('id') || normKey.includes('session') || normKey.includes('ticket'))) {
+                                    id = String(row[key]).trim();
+                                }
+                                if (!transcript && (normKey.includes('user') || normKey.includes('log') || normKey.includes('transcript') || normKey.includes('message') || normKey.includes('conversation') || normKey.includes('dialog') || normKey.includes('text'))) {
+                                    transcript = String(row[key]).trim();
+                                }
+                            }
+
+                            if (!id) id = `CHAT-${200 + index}`;
+                            if (!transcript) {
+                                transcript = Object.entries(row)
+                                    .filter(([k]) => !k.toLowerCase().includes('id'))
+                                    .map(([, v]) => String(v).trim())
+                                    .filter(Boolean)
+                                    .join('\n');
+                            }
+
+                            return { id, transcript };
+                        }).filter(item => item.transcript.length > 0);
+
+                        if (importedConvos.length === 0) {
+                            alert("Could not extract conversation transcripts from file!");
+                            return;
+                        }
+
+                        this.stagedConvos = importedConvos;
+                        this.renderStagedConversations();
+                        this.updateCounts();
+
+                        document.getElementById('convo-file-status').classList.remove('hidden');
+                        document.getElementById('convo-file-name').innerText = file.name;
+                        document.getElementById('convo-file-rows').innerText = `${importedConvos.length} chats loaded`;
+
+                    } catch (err) {
+                        console.error(err);
+                        alert("Error parsing conversation Excel file: " + err.message);
+                    } finally {
+                        event.target.value = '';
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            },
+
+            renderStagedConversations() {
+                const listEl = document.getElementById('staged-convo-list');
+                if (!listEl) return;
+
+                if (this.stagedConvos.length === 0) {
+                    listEl.innerHTML = `
+                        <div class="text-center py-12 text-slate-400">
+                            <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
+                            <p class="text-sm">No conversations loaded yet.</p>
+                            <p class="text-xs mt-1">Upload an Excel file or click "Reset Demo Chats" above.</p>
+                        </div>`;
+                    lucide.createIcons();
+                    return;
+                }
+
+                listEl.innerHTML = this.stagedConvos.map((convo, idx) => `
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl hover:border-blue-300 transition flex items-start justify-between gap-3 text-xs">
+                        <div class="space-y-1 flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-blue-700 font-mono">${this.escapeHtml(convo.id)}</span>
+                                <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-mono">Chat #${idx + 1}</span>
+                            </div>
+                            <p class="text-slate-700 font-mono line-clamp-2 text-[11px] bg-white p-2 rounded border border-slate-100 whitespace-pre-wrap">${this.escapeHtml(convo.transcript)}</p>
+                        </div>
+                        <button onclick="app.removeStagedConvo('${convo.id}')" class="text-slate-400 hover:text-rose-600 p-1 transition" title="Remove from queue">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `).join('');
+
+                lucide.createIcons();
+            },
+
+            removeStagedConvo(id) {
+                this.stagedConvos = this.stagedConvos.filter(c => c.id !== id);
+                this.renderStagedConversations();
+                this.updateCounts();
+            },
+
+            clearStagedConvos() {
+                this.stagedConvos = [];
+                this.renderStagedConversations();
+                this.updateCounts();
+            },
+
+            loadDemoConvos() {
+                this.stagedConvos = [...this.defaultConvos];
+                this.renderStagedConversations();
+                this.updateCounts();
+            },
+
+            addSingleConversationPrompt() {
+                const text = prompt("Paste full conversation log:");
+                if (text && text.trim()) {
+                    const id = `CHAT-${Math.floor(1000 + Math.random() * 9000)}`;
+                    this.stagedConvos.push({ id, transcript: text.trim() });
+                    this.renderStagedConversations();
+                    this.updateCounts();
+                }
+            },
+
+            async runAudit() {
+                if (this.stagedConvos.length === 0) {
+                    alert("Please upload or add conversations to the queue first!");
+                    return;
+                }
+
+                const btn = document.getElementById('btn-run-audit-header');
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Auditing...`;
+
+                try {
+                    const results = [];
+
+                    for (const convo of this.stagedConvos) {
+                        const audit = await this.auditSingleConversation(convo);
+                        results.push(audit);
+                    }
+
+                    this.auditResults = results;
+                    this.renderAuditTable();
+                    this.updateSummaryMetrics();
+                    this.updateCounts();
+                    this.switchTab('results');
+
+                } catch (err) {
+                    console.error("Audit error:", err);
+                    alert("An error occurred while running the audit: " + err.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i data-lucide="play" class="w-4 h-4 fill-current"></i><span>Run Full Audit</span>`;
+                    lucide.createIcons();
+                }
+            },
+
+            async auditSingleConversation(convo) {
+                const transcript = convo.transcript;
+
+                // 1. Consolidated User Messages
+                const lines = transcript.split('\n');
+                const userLines = lines
+                    .filter(l => l.toLowerCase().startsWith('user:') || (!l.toLowerCase().startsWith('ai:') && !l.toLowerCase().startsWith('bot:')))
+                    .map(l => l.replace(/^user:\s*/i, '').trim())
+                    .filter(Boolean);
+
+                const consolidatedMessages = userLines.join(' | ') || transcript;
+
+                // 2. Check Proactive Escape Workflow ("Live agent")
+                const escapeRegex = /\b(live agent|human agent|representative|person|talk to agent|connect me to agent|operator)\b/i;
+                const escapeWorkflow = escapeRegex.test(transcript) ? 'Y' : 'N';
+
+                // 3. Extract Core Issue & Knowledge Base Match
+                let matchedKB = null;
+                let highestScore = 0;
+
+                // Tokenize consolidated text for keyword matching against KB Titles and stripped KB Bodies
+                const cleanUserText = consolidatedMessages.toLowerCase().replace(/[^\w\s]/gi, '');
+                const userWords = new Set(cleanUserText.split(/\s+/).filter(w => w.length > 2));
+
+                for (const kb of this.kbData) {
+                    const kbPlainText = (kb.kbTitle + ' ' + this.stripHtml(kb.kbBody)).toLowerCase().replace(/[^\w\s]/gi, '');
+                    const kbWords = kbPlainText.split(/\s+/);
+                    
+                    let matchCount = 0;
+                    userWords.forEach(word => {
+                        if (kbWords.includes(word)) matchCount++;
+                    });
+
+                    if (matchCount > highestScore) {
+                        highestScore = matchCount;
+                        matchedKB = kb;
+                    }
+                }
+
+                // Determine flags
+                const kbAvailable = (matchedKB && highestScore >= 1) ? 'Y' : 'N';
+                if (kbAvailable === 'N') matchedKB = null;
+
+                let sdInterventionNeeded = 'N/A';
+                if (kbAvailable === 'Y' && matchedKB) {
+                    if (matchedKB.kbRepo === 'VRS IT Service Desk') {
+                        sdInterventionNeeded = 'Y';
+                    } else if (matchedKB.kbRepo === 'VRS Self Service') {
+                        sdInterventionNeeded = 'N';
+                    }
+                }
+
+                // Summarize Identified Issue
+                let identifiedIssue = userLines.length > 0 ? userLines[0] : 'General Service Query';
+                if (consolidatedMessages.toLowerCase().includes('vpn')) identifiedIssue = 'VPN Connection & Token Sync Issue';
+                else if (consolidatedMessages.toLowerCase().includes('password')) identifiedIssue = 'Domain Password Reset & Account Unlock';
+                else if (consolidatedMessages.toLowerCase().includes('laptop') || consolidatedMessages.toLowerCase().includes('hardware')) identifiedIssue = 'Hardware Replacement Request';
+                else if (consolidatedMessages.toLowerCase().includes('catering')) identifiedIssue = 'Non-IT Facilities Catering Request';
+
+                return {
+                    id: convo.id,
+                    rawTranscript: transcript,
+                    consolidatedMessages: consolidatedMessages,
+                    identifiedIssue: identifiedIssue,
+                    kbAvailable: kbAvailable,
+                    escapeWorkflow: escapeWorkflow,
+                    sdInterventionNeeded: sdInterventionNeeded,
+                    matchedKB: matchedKB,
+                    reasoning: `Matched via keyword heuristic score (${highestScore}).`
+                };
+            },
+
+            renderAuditTable() {
+                const tbody = document.getElementById('audit-table-body');
+                if (!tbody) return;
+
+                if (this.auditResults.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center py-12 text-slate-400">
+                                <i data-lucide="file-spreadsheet" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
+                                <p>No audit results generated yet.</p>
+                                <p class="text-xs mt-1">Upload chats in Tab 1 and click "Run Full Audit".</p>
+                            </td>
+                        </tr>`;
+                    lucide.createIcons();
+                    return;
+                }
+
+                tbody.innerHTML = this.auditResults.map(row => {
+                    const kbBadge = row.kbAvailable === 'Y' 
+                        ? `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold text-[10px]">Y</span>`
+                        : `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full font-bold text-[10px]">N</span>`;
+
+                    const escapeBadge = row.escapeWorkflow === 'Y'
+                        ? `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full font-bold text-[10px]">Y (Escaped)</span>`
+                        : `<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-semibold text-[10px]">N</span>`;
+
+                    let sdBadge = `<span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-[10px]">N/A</span>`;
+                    if (row.sdInterventionNeeded === 'Y') {
+                        sdBadge = `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-[10px]">Y (SD Needed)</span>`;
+                    } else if (row.sdInterventionNeeded === 'N') {
+                        sdBadge = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold text-[10px]">N (Self Solvable)</span>`;
+                    }
+
+                    return `
+                        <tr class="hover:bg-slate-50/80 transition">
+                            <td class="py-3 px-4 font-mono font-bold text-blue-700">${this.escapeHtml(row.id)}</td>
+                            <td class="py-3 px-4">
+                                <div class="font-medium text-slate-900">${this.escapeHtml(row.identifiedIssue)}</div>
+                                <div class="text-[11px] text-slate-500 font-mono line-clamp-1 mt-0.5">${this.escapeHtml(row.consolidatedMessages)}</div>
+                            </td>
+                            <td class="py-3 px-4 text-center">${kbBadge}</td>
+                            <td class="py-3 px-4 text-center">${escapeBadge}</td>
+                            <td class="py-3 px-4 text-center">${sdBadge}</td>
+                            <td class="py-3 px-4 font-mono text-[11px]">
+                                ${row.matchedKB ? `<span class="text-slate-800 font-semibold">${row.matchedKB.kbNumber}</span> <span class="text-slate-400">(${row.matchedKB.kbRepo})</span>` : '<span class="text-slate-400 italic">None</span>'}
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <button onclick="app.openAuditDetailModal('${row.id}')" class="p-1.5 bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-700 rounded-lg transition" title="Inspect & Override">
+                                    <i data-lucide="sliders" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+                        </tr>`;
+                }).join('');
+
+                lucide.createIcons();
+            },
+
+            openAuditDetailModal(id) {
+                const row = this.auditResults.find(r => r.id === id);
+                if (!row) return;
+
+                this.selectedAuditId = id;
+                document.getElementById('modal-audit-title').innerText = `Audit Log Inspector - ${row.id}`;
+                document.getElementById('modal-convo-transcript').innerText = row.rawTranscript;
+                document.getElementById('modal-consolidated-msg').innerText = row.consolidatedMessages;
+                document.getElementById('modal-identified-issue').innerText = row.identifiedIssue;
+                
+                document.getElementById('modal-override-kb').value = row.kbAvailable;
+                document.getElementById('modal-override-escape').value = row.escapeWorkflow;
+                document.getElementById('modal-override-sd').value = row.sdInterventionNeeded;
+                document.getElementById('modal-audit-reasoning').value = row.reasoning || '';
+
+                const kbSelect = document.getElementById('modal-override-kb-article');
+                kbSelect.innerHTML = '<option value="">-- Select KB Article --</option>' + 
+                    this.kbData.map(k => `<option value="${k.kbNumber}" ${row.matchedKB && row.matchedKB.kbNumber === k.kbNumber ? 'selected' : ''}>${k.kbNumber}: ${k.kbTitle} (${k.kbRepo})</option>`).join('');
+
+                this.openModal('modal-audit-detail');
+            },
+
+            saveAuditOverride() {
+                if (!this.selectedAuditId) return;
+
+                const row = this.auditResults.find(r => r.id === this.selectedAuditId);
+                if (row) {
+                    row.kbAvailable = document.getElementById('modal-override-kb').value;
+                    row.escapeWorkflow = document.getElementById('modal-override-escape').value;
+                    row.sdInterventionNeeded = document.getElementById('modal-override-sd').value;
+                    row.reasoning = document.getElementById('modal-audit-reasoning').value.trim();
+
+                    const selectedKbNum = document.getElementById('modal-override-kb-article').value;
+                    row.matchedKB = this.kbData.find(k => k.kbNumber === selectedKbNum) || null;
+
+                    this.renderAuditTable();
+                    this.updateSummaryMetrics();
+                    this.closeModal('modal-audit-detail');
+                }
+            },
+
+            exportAuditExcel() {
+                if (this.auditResults.length === 0) {
+                    alert("No audit results to export!");
+                    return;
+                }
+
+                // Structure exact requested output: Consolidated Messages - Issue - KB Available (Y/N), Escape Workflow? (Y/N), SD Intervention Needed? (Y/N/N/A)
+                const exportData = this.auditResults.map(r => ({
+                    'Chat ID': r.id,
+                    'Consolidated Messages': r.consolidatedMessages,
+                    'Identified Core Issue': r.identifiedIssue,
+                    'KB Available (Y/N)': r.kbAvailable,
+                    'Escape Workflow? (Y/N)': r.escapeWorkflow,
+                    'SD Intervention Needed? (Y/N/N/A)': r.sdInterventionNeeded,
+                    'Matched KB Number': r.matchedKB ? r.matchedKB.kbNumber : 'N/A',
+                    'Matched KB Repository': r.matchedKB ? r.matchedKB.kbRepo : 'N/A',
+                    'Auditor Notes': r.reasoning || ''
+                }));
+
+                const worksheet = XLSX.utils.json_to_sheet(exportData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Audit Consolidated Report");
+
+                XLSX.writeFile(workbook, `AI_Chatbot_Audit_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+            },
+
+            renderKBTable() {
+                const tbody = document.getElementById('kb-table-body');
+                if (!tbody) return;
+
+                const query = (document.getElementById('kb-search')?.value || '').toLowerCase();
+                const repoFilter = document.getElementById('kb-filter-repo')?.value || 'ALL';
+
+                const filtered = this.kbData.filter(k => {
+                    const matchQuery = k.kbNumber.toLowerCase().includes(query) || 
+                                       k.kbTitle.toLowerCase().includes(query) || 
+                                       this.stripHtml(k.kbBody).toLowerCase().includes(query);
+                    const matchRepo = repoFilter === 'ALL' || k.kbRepo === repoFilter;
+                    return matchQuery && matchRepo;
+                });
+
+                if (filtered.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">No matching KB articles found.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = filtered.map(k => `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-mono font-bold text-slate-800">${this.escapeHtml(k.kbNumber)}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-900">${this.escapeHtml(k.kbTitle)}</td>
+                        <td class="py-3 px-4 text-slate-600 font-mono text-[11px] line-clamp-2">${this.escapeHtml(this.stripHtml(k.kbBody))}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${k.kbRepo === 'VRS IT Service Desk' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">
+                                ${k.kbRepo}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center font-bold">
+                            ${k.kbRepo === 'VRS IT Service Desk' ? '<span class="text-amber-600">Y (SD)</span>' : '<span class="text-emerald-600">N (User)</span>'}
+                        </td>
+                        <td class="py-3 px-4 text-center space-x-1">
+                            <button onclick="app.openEditKBModal('${k.id}')" class="p-1 text-slate-400 hover:text-blue-600 transition" title="Edit KB">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="app.deleteKBArticle('${k.id}')" class="p-1 text-slate-400 hover:text-rose-600 transition" title="Delete KB">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>`).join('');
+
+                lucide.createIcons();
+            },
+
+            openNewKBModal() {
+                document.getElementById('kb-form-id').value = '';
+                document.getElementById('kb-form-num').value = `KB00${101 + this.kbData.length}`;
+                document.getElementById('kb-form-title').value = '';
+                document.getElementById('kb-form-body').value = '<p>Enter step-by-step instructions here...</p>';
+                document.getElementById('kb-form-repo').value = 'VRS Self Service';
+                document.getElementById('modal-kb-title').innerText = "New Knowledge Base Article";
+                this.switchKBBodyTab('code');
+                this.openModal('modal-kb-form');
+            },
+
+            openEditKBModal(id) {
+                const article = this.kbData.find(k => k.id === id);
+                if (!article) return;
+
+                document.getElementById('kb-form-id').value = article.id;
+                document.getElementById('kb-form-num').value = article.kbNumber;
+                document.getElementById('kb-form-title').value = article.kbTitle;
+                document.getElementById('kb-form-body').value = article.kbBody;
+                document.getElementById('kb-form-repo').value = article.kbRepo;
+                document.getElementById('modal-kb-title').innerText = "Edit Knowledge Base Article";
+                this.switchKBBodyTab('code');
+                this.openModal('modal-kb-form');
+            },
+
+            switchKBBodyTab(tab) {
+                const codeBtn = document.getElementById('kb-tab-code');
+                const previewBtn = document.getElementById('kb-tab-preview');
+                const codeContainer = document.getElementById('kb-body-code-container');
+                const previewContainer = document.getElementById('kb-body-preview-container');
+
+                if (tab === 'code') {
+                    codeBtn.className = "px-2 py-0.5 rounded-md font-semibold bg-white shadow-sm text-blue-600";
+                    previewBtn.className = "px-2 py-0.5 rounded-md font-semibold text-slate-600";
+                    codeContainer.classList.remove('hidden');
+                    previewContainer.classList.add('hidden');
+                } else {
+                    previewBtn.className = "px-2 py-0.5 rounded-md font-semibold bg-white shadow-sm text-blue-600";
+                    codeBtn.className = "px-2 py-0.5 rounded-md font-semibold text-slate-600";
+                    codeContainer.classList.add('hidden');
+                    previewContainer.classList.remove('hidden');
+                    previewContainer.innerHTML = document.getElementById('kb-form-body').value;
+                }
+            },
+
+            saveKBArticle(event) {
+                event.preventDefault();
+                const id = document.getElementById('kb-form-id').value;
+                const kbNumber = document.getElementById('kb-form-num').value.trim();
+                const kbTitle = document.getElementById('kb-form-title').value.trim();
+                const kbBody = document.getElementById('kb-form-body').value.trim();
+                const kbRepo = document.getElementById('kb-form-repo').value;
+
+                if (id) {
+                    const article = this.kbData.find(k => k.id === id);
+                    if (article) {
+                        article.kbNumber = kbNumber;
+                        article.kbTitle = kbTitle;
+                        article.kbBody = kbBody;
+                        article.kbRepo = kbRepo;
+                    }
+                } else {
+                    this.kbData.push({
+                        id: `kb-${Date.now()}`,
+                        kbNumber,
+                        kbTitle,
+                        kbBody,
+                        kbRepo
+                    });
+                }
+
+                this.renderKBTable();
+                this.updateCounts();
+                this.closeModal('modal-kb-form');
+            },
+
+            deleteKBArticle(id) {
+                if (confirm("Are you sure you want to delete this KB article?")) {
+                    this.kbData = this.kbData.filter(k => k.id !== id);
+                    this.renderKBTable();
+                    this.updateCounts();
+                }
+            },
+
+            handleKBFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+
+                        const importedKB = jsonData.map((row, idx) => ({
+                            id: `kb-imp-${idx}`,
+                            kbNumber: row['KB Number'] || row['KBNumber'] || `KB00${200+idx}`,
+                            kbTitle: row['KB Title'] || row['Title'] || 'Untitled Article',
+                            kbBody: row['Article Body'] || row['Body'] || '<p>No content provided</p>',
+                            kbRepo: (row['Knowledge base'] || row['Repository'] || '').includes('Desk') ? 'VRS IT Service Desk' : 'VRS Self Service'
+                        }));
+
+                        this.kbData = importedKB;
+                        this.renderKBTable();
+                        this.updateCounts();
+                        alert(`Successfully imported ${importedKB.length} KB articles!`);
+                    } catch (err) {
+                        alert("Error importing KB Excel file: " + err.message);
+                    } finally {
+                        event.target.value = '';
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            },
+
+            downloadKBTemplate() {
+                const template = [
+                    { 'KB Number': 'KB00101', 'KB Title': 'Password Reset Portal', 'Article Body': '<p>User self service portal instructions...</p>', 'Knowledge base': 'VRS Self Service' },
+                    { 'KB Number': 'KB00102', 'KB Title': 'VPN Token Resync', 'Article Body': '<p>Service Desk admin action required...</p>', 'Knowledge base': 'VRS IT Service Desk' }
+                ];
+                const ws = XLSX.utils.json_to_sheet(template);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "KB_Template");
+                XLSX.writeFile(wb, "Knowledge_Base_Template.xlsx");
+            },
+
+            downloadConvoTemplate() {
+                const template = [
+                    { 'Chat ID': 'CHAT-1001', 'Conversation Log': 'User: I need help resetting password\nAI: Go to self service portal' },
+                    { 'Chat ID': 'CHAT-1002', 'Conversation Log': 'User: Live agent please\nAI: Connecting...' }
+                ];
+                const ws = XLSX.utils.json_to_sheet(template);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Chat_Template");
+                XLSX.writeFile(wb, "Chat_Log_Upload_Template.xlsx");
+            },
+
+            updateSummaryMetrics() {
+                const total = this.auditResults.length;
+                if (total === 0) {
+                    document.getElementById('metric-total-audited').innerText = '0';
+                    document.getElementById('metric-kb-coverage').innerText = '0%';
+                    document.getElementById('metric-escape-rate').innerText = '0%';
+                    document.getElementById('metric-sd-ratio').innerText = '0%';
+                    return;
+                }
+
+                const kbAvailableCount = this.auditResults.filter(r => r.kbAvailable === 'Y').length;
+                const escapeCount = this.auditResults.filter(r => r.escapeWorkflow === 'Y').length;
+                const sdCount = this.auditResults.filter(r => r.sdInterventionNeeded === 'Y').length;
+
+                document.getElementById('metric-total-audited').innerText = total;
+                document.getElementById('metric-kb-coverage').innerText = `${Math.round((kbAvailableCount / total) * 100)}%`;
+                document.getElementById('metric-escape-rate').innerText = `${Math.round((escapeCount / total) * 100)}%`;
+                document.getElementById('metric-sd-ratio').innerText = `${Math.round((sdCount / total) * 100)}%`;
+            },
+
+            renderCharts() {
+                if (typeof Chart === 'undefined') return;
+
+                const total = this.auditResults.length || 1;
+                const sdY = this.auditResults.filter(r => r.sdInterventionNeeded === 'Y').length;
+                const sdN = this.auditResults.filter(r => r.sdInterventionNeeded === 'N').length;
+                const sdNA = this.auditResults.filter(r => r.sdInterventionNeeded === 'N/A').length;
+
+                // Canvas 1: SD Breakdown
+                const ctx1 = document.getElementById('chart-sd-breakdown');
+                if (ctx1) {
+                    if (this.charts.sd) this.charts.sd.destroy();
+                    this.charts.sd = new Chart(ctx1, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['SD Agent Needed (Y)', 'User Self-Solvable (N)', 'No KB (N/A)'],
+                            datasets: [{
+                                data: [sdY, sdN, sdNA],
+                                backgroundColor: ['#f59e0b', '#10b981', '#94a3b8']
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+                }
+
+                // Canvas 2: KB Coverage
+                const ctx2 = document.getElementById('chart-kb-coverage');
+                if (ctx2) {
+                    const kbY = this.auditResults.filter(r => r.kbAvailable === 'Y').length;
+                    const kbN = this.auditResults.filter(r => r.kbAvailable === 'N').length;
+
+                    if (this.charts.kb) this.charts.kb.destroy();
+                    this.charts.kb = new Chart(ctx2, {
+                        type: 'pie',
+                        data: {
+                            labels: ['Matched KB Available', 'Missing KB Article'],
+                            datasets: [{
+                                data: [kbY, kbN],
+                                backgroundColor: ['#10b981', '#f43f5e']
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+                }
+            },
+
+            saveApiKey() {
+                this.geminiApiKey = document.getElementById('input-gemini-key').value.trim();
+                document.getElementById('api-key-status').innerText = this.geminiApiKey ? 'Gemini API Connected' : 'Gemini API Key';
+                this.closeModal('modal-api-key');
+            }
+        };
+
+        // Initialize application on load
+        window.onload = function() {
+            app.init();
+        };
+    </script>
+</body>
+</html>
